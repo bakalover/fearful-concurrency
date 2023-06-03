@@ -24,8 +24,8 @@ where
     }
 }
 
-/// Provider for AtomRef. Has same lifetime as resource and consequently as mutex.
-pub struct AtomRefProvider<'a, R>
+/// Provider for AtomRef. Has the same lifetime as resource and consequently as mutex.
+pub struct RefProvider<'a, R>
 where
     R: ?Sized + 'a,
 {
@@ -33,13 +33,13 @@ where
     mutex: Mutex,
 }
 
-impl<'a, R> AtomRefProvider<'a, R>
+impl<'a, R> RefProvider<'a, R>
 where
     R: ?Sized + 'a,
 {
-    /// Provider binds resource reference to mutex
-    pub fn create(resource: &'a R) -> Self {
-        AtomRefProvider {
+    /// Provider binds resource's reference to mutex
+    pub fn create_from(resource: &'a R) -> Self {
+        RefProvider {
             resource: resource,
             mutex: Mutex::new(),
         }
