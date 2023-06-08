@@ -25,27 +25,24 @@ impl Mutex {
             futex_word: AtomicU32::new(get_st(State::Unlocked)),
         }
     }
-    pub fn lock(&self) {
+    fn cmpxchg(&self, cur: State, needed: State) -> bool {
         match self.futex_word.compare_exchange(
-            get_st(State::Unlocked),
-            get_st(State::Locked),
+            get_st(cur),
+            get_st(needed),
             Ordering::Relaxed,
             Ordering::Relaxed,
         ) {
-            Ok(_) => return,
-            Err(_) => (),
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+    pub fn lock(&self) {
+        if (self.cmpxchg(State::Unlocked, State::Locked)) {
+            return;
         }
         loop {
             if self.futex_word.load(Ordering::Relaxed) == get_st(State::Waiting)
-                || !(match self.futex_word.compare_exchange(
-                    get_st(State::Locked),
-                    get_st(State::Waiting),
-                    Ordering::Relaxed,
-                    Ordering::Relaxed,
-                ) {
-                    Ok(_) => true,
-                    Err(_) => false,
-                })
+                || !self.cmpxchg(State::Locked, State::Waiting)
             {
                 unsafe {
                     syscall(
@@ -59,16 +56,8 @@ impl Mutex {
                     );
                 }
             }
-            if !(match self.futex_word.compare_exchange(
-                get_st(State::Unlocked),
-                get_st(State::Waiting),
-                Ordering::Relaxed,
-                Ordering::Relaxed,
-            ) {
-                Ok(_) => true,
-                Err(_) => false,
-            }) {
-                return;
+            if self.cmpxchg(State::Unlocked, State::Waiting) {
+                break;
             }
         }
     }
