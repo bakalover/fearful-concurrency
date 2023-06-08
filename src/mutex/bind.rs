@@ -10,7 +10,7 @@ where
     R: ?Sized + 'a,
 {
     resource_ref: &'a R,
-    guard: Guard<'a>,
+    _guard: Guard<'a>,
 }
 
 /// Dereferencing AtomRef provides protected resource.
@@ -23,6 +23,7 @@ where
         self.resource_ref
     }
 }
+
 
 /// Provider for AtomRef. Has the same lifetime as resource and consequently as mutex.
 pub struct RefProvider<'a, R>
@@ -40,7 +41,7 @@ where
     /// Provider binds resource's reference to mutex
     pub fn create_from(resource: &'a R) -> Self {
         RefProvider {
-            resource: resource,
+            resource,
             mutex: Mutex::new(),
         }
     }
@@ -48,8 +49,8 @@ where
     ///Acquiring provides unique AtomRef for first thread. Other should wait until reference is destroyed.
     pub fn acquire(&'a self) -> AtomRef<'a, R> {
         AtomRef {
-            resource_ref: &self.resource,
-            guard: Guard::new(&self.mutex),
+            resource_ref: self.resource,
+            _guard: Guard::new(&self.mutex),
         }
     }
 }
