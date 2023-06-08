@@ -1,12 +1,12 @@
 use libc::{syscall, SYS_futex, FUTEX_WAIT, FUTEX_WAKE};
 use std::sync::atomic::{AtomicU32, Ordering};
-///Mutex's states
+///Mutex's states.
 enum State {
     Unlocked,
     Locked,
     Waiting,
 }
-
+///Transform mutex state to futex memory cell size.
 fn get_st(st: State) -> u32 {
     match st {
         State::Unlocked => 0,
@@ -19,6 +19,12 @@ pub struct Mutex {
     futex_word: AtomicU32,
 }
 
+impl Default for Mutex {
+    fn default() -> Self {
+        Mutex::new()
+    }
+}
+
 impl Mutex {
     pub fn new() -> Self {
         Mutex {
@@ -26,18 +32,17 @@ impl Mutex {
         }
     }
     fn cmpxchg(&self, cur: State, needed: State) -> bool {
-        match self.futex_word.compare_exchange(
-            get_st(cur),
-            get_st(needed),
-            Ordering::Relaxed,
-            Ordering::Relaxed,
-        ) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        self.futex_word
+            .compare_exchange(
+                get_st(cur),
+                get_st(needed),
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            )
+            .is_ok()
     }
     pub fn lock(&self) {
-        if (self.cmpxchg(State::Unlocked, State::Locked)) {
+        if self.cmpxchg(State::Unlocked, State::Locked) {
             return;
         }
         loop {
@@ -61,6 +66,8 @@ impl Mutex {
             }
         }
     }
+    
+    ///Unlock operation causes waking up SINGLE thread.
     pub fn unlock(&self) {
         if self.futex_word.fetch_sub(1, Ordering::Relaxed) != get_st(State::Locked) {
             self.futex_word

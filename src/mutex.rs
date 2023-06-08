@@ -12,9 +12,12 @@ pub use self::{
 mod tests {
 
     use super::{bind::RefProvider, core::Mutex, guard::Guard};
-    use std::{cell::Cell, task::RawWakerVTable, thread};
+    use std::{cell::Cell, thread};
 
+    ///Number of critical sections.
     const CRIT: usize = 100000;
+
+    ///Special custom data type, that allows data races.
     struct RaceCell {
         val: Cell<i32>,
     }
@@ -34,6 +37,8 @@ mod tests {
             self.val.set(val);
         }
     }
+
+    ///Single mutex.
     #[test]
     pub fn mutex_join() {
         let mut counter = 0;
@@ -46,6 +51,7 @@ mod tests {
         assert_eq!(counter, CRIT);
     }
 
+    ///Single mutex + data race.
     #[test]
     pub fn mutex_detach() {
         let counter = RaceCell::new(0);
@@ -72,6 +78,7 @@ mod tests {
         assert_eq!(counter.get(), CRIT as i32);
     }
 
+    ///Multiple mutexes with special lifetimes.
     #[test]
     pub fn mutex_multi_join() {
         let mut arr: Vec<i32> = vec![];
@@ -98,6 +105,7 @@ mod tests {
         assert_eq!(arr.into_iter().filter(|x| *x == 1).count(), CRIT * 2);
     }
 
+    /// Guard + data race (basically RAII version of "mutex_detach" test).
     #[test]
     pub fn guard() {
         let counter = RaceCell::new(0);
@@ -121,6 +129,7 @@ mod tests {
         assert_eq!(counter.get(), CRIT as i32);
     }
 
+    /// Providing references + data race. Using two Cells to check state on each step and "summary" state represented in "counter".
     #[test]
     pub fn providing() {
         let (mut state, mut counter) = (RaceCell::new(0), RaceCell::new(0));

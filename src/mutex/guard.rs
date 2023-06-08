@@ -1,4 +1,4 @@
-/// Basic RAII implementation Guard for objects that can lock some data
+/// Basic RAII implementation of mutex guard.
 use super::core::Mutex;
 pub struct Guard<'a> {
     mutex: &'a Mutex,
@@ -7,7 +7,7 @@ pub struct Guard<'a> {
 impl<'a> Guard<'a> {
     pub fn new(mutex: &'a Mutex) -> Self {
         mutex.lock();
-        Guard { mutex: mutex }
+        Guard { mutex }
     }
 }
 
