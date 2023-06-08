@@ -2,11 +2,17 @@ pub mod bind;
 pub mod core;
 pub mod guard;
 
+pub use self::{
+    bind::{AtomRef, RefProvider},
+    core::Mutex,
+    guard::Guard,
+};
+
 #[cfg(test)]
 mod tests {
 
     use super::{bind::RefProvider, core::Mutex, guard::Guard};
-    use std::{cell::Cell, thread};
+    use std::{cell::Cell, task::RawWakerVTable, thread};
 
     const CRIT: usize = 100000;
     struct RaceCell {
@@ -44,7 +50,7 @@ mod tests {
     pub fn mutex_detach() {
         let counter = RaceCell::new(0);
         let mutex = Mutex::new();
-        for i in 0..CRIT {
+        for _ in 0..CRIT {
             thread::scope(|scope| {
                 scope.spawn(|| {
                     mutex.lock();
@@ -96,22 +102,19 @@ mod tests {
     pub fn guard() {
         let counter = RaceCell::new(0);
         let mutex = Mutex::new();
-        for i in 0..CRIT {
+        for _ in 0..CRIT {
             thread::scope(|scope| {
                 scope.spawn(|| {
                     let _guard = Guard::new(&mutex);
                     counter.set(counter.get() + 1);
-                    drop(_guard);
                 });
                 scope.spawn(|| {
                     let _guard = Guard::new(&mutex);
                     counter.set(counter.get() + 1);
-                    drop(_guard);
                 });
                 scope.spawn(|| {
                     let _guard = Guard::new(&mutex);
                     counter.set(counter.get() - 1);
-                    drop(_guard);
                 });
             });
         }
@@ -120,22 +123,27 @@ mod tests {
 
     #[test]
     pub fn providing() {
-        let mut state = RaceCell::new(0);
-
-        let resource_provider = RefProvider::create_from(&mut state);
-        for _ in 0..10 {
+        let (mut state, mut counter) = (RaceCell::new(0), RaceCell::new(0));
+        let state_provider = RefProvider::create_from(&mut state);
+        let counter_provider = RefProvider::create_from(&mut counter);
+        for _ in 0..CRIT {
             thread::scope(|scope| {
                 scope.spawn(|| {
-                    let state_ref = RefProvider::acquire(&resource_provider);
+                    let state_ref = RefProvider::acquire(&state_provider);
+                    let counter_ref = RefProvider::acquire(&counter_provider);
                     state_ref.set(1);
                     assert_eq!(state_ref.get(), 1);
+                    counter_ref.set(counter_ref.get() + 1);
                 });
                 scope.spawn(|| {
-                    let state_ref = RefProvider::acquire(&resource_provider);
+                    let state_ref = RefProvider::acquire(&state_provider);
+                    let counter_ref = RefProvider::acquire(&counter_provider);
                     state_ref.set(0);
                     assert_eq!(state_ref.get(), 0);
+                    counter_ref.set(counter_ref.get() + 1);
                 });
             });
         }
+        assert_eq!(counter_provider.acquire().get(), (CRIT * 2) as i32);
     }
 }
