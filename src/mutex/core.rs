@@ -1,6 +1,8 @@
 use libc::{syscall, SYS_futex, FUTEX_WAIT, FUTEX_WAKE};
 use std::sync::atomic::{AtomicU32, Ordering};
 ///Mutex's states.
+///
+#[derive(Clone, Copy)]
 enum State {
     Unlocked,
     Locked,
@@ -26,6 +28,7 @@ impl Default for Mutex {
 }
 
 impl Mutex {
+    #[must_use]
     pub fn new() -> Self {
         Mutex {
             futex_word: AtomicU32::new(get_st(State::Unlocked)),
@@ -52,7 +55,7 @@ impl Mutex {
                 unsafe {
                     syscall(
                         SYS_futex,
-                        &self.futex_word as *const AtomicU32,
+                        std::ptr::addr_of!(self.futex_word),
                         FUTEX_WAIT,
                         2,
                         0,
@@ -66,7 +69,7 @@ impl Mutex {
             }
         }
     }
-    
+
     ///Unlock operation causes waking up SINGLE thread.
     pub fn unlock(&self) {
         if self.futex_word.fetch_sub(1, Ordering::Relaxed) != get_st(State::Locked) {
@@ -75,7 +78,7 @@ impl Mutex {
             unsafe {
                 syscall(
                     SYS_futex,
-                    &self.futex_word as *const AtomicU32,
+                    std::ptr::addr_of!(self.futex_word),
                     FUTEX_WAKE,
                     1,
                     0,
