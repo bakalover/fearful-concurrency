@@ -1,4 +1,3 @@
-use libc::{syscall, SYS_futex, FUTEX_WAIT, FUTEX_WAKE};
 use std::{
     arch::asm,
     sync::atomic::{AtomicU32, Ordering},
@@ -56,14 +55,16 @@ impl Mutex {
                 || !self.cmpxchg(State::Locked, State::Waiting)
             {
                 unsafe {
-                    syscall(
-                        SYS_futex,
-                        std::ptr::addr_of!(self.futex_word),
-                        FUTEX_WAIT,
-                        2,
-                        0,
-                        0,
-                        0,
+                    let addr = std::ptr::addr_of!(self.futex_word);
+                    asm!(
+                        "mov rax, 202",
+                        "mov rdi, {0}",
+                        "mov rsi, 0",
+                        "mov rdx, 2",
+                        "mov rcx, 0",
+                        "mov r8, 0",
+                        "mov r9, 0",
+                        in(reg) addr
                     );
                 }
             }
@@ -79,14 +80,16 @@ impl Mutex {
             self.futex_word
                 .store(get_st(State::Unlocked), Ordering::Relaxed);
             unsafe {
-                syscall(
-                    SYS_futex,
-                    std::ptr::addr_of!(self.futex_word),
-                    FUTEX_WAKE,
-                    1,
-                    0,
-                    0,
-                    0,
+                let addr = std::ptr::addr_of!(self.futex_word);
+                asm!(
+                    "mov rax, 202",
+                    "mov rdi, {0}",
+                    "mov rsi, 1",
+                    "mov rdx, 1",
+                    "mov rcx, 0",
+                    "mov r8, 0",
+                    "mov r9, 0",
+                    in(reg) addr
                 );
             }
         };
