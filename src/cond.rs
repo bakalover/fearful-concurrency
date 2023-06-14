@@ -1,3 +1,4 @@
-pub mod semaphore;
-pub mod condvar;
+pub mod barrier;
 pub mod bqueue;
+pub mod condvar;
+pub mod semaphore;
