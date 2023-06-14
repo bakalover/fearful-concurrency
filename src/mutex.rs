@@ -3,7 +3,7 @@ pub mod core;
 pub mod guard;
 
 pub use self::{
-    bind::{AtomRef, RefProvider},
+    bind::{Ar, Rp},
     core::Mutex,
     guard::Guard,
 };
