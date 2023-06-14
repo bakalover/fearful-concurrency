@@ -1,5 +1,5 @@
 /// Basic RAII implementation of mutex guard.
-use super::core::Mutex;
+use super::mutex::Mutex;
 pub struct Guard<'a> {
     mutex: &'a Mutex,
 }

@@ -1,4 +1,5 @@
-use super::{core::Mutex, guard::Guard};
+use super::core::Mutex;
+use crate::guard::Guard;
 use std::ops::Deref;
 
 /// Simple Reference associated with inner resource, that may be not measurable.

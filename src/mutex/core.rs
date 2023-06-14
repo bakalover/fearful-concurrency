@@ -1,5 +1,8 @@
 use libc::{syscall, SYS_futex, FUTEX_WAIT, FUTEX_WAKE};
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::{
+    arch::asm,
+    sync::atomic::{AtomicU32, Ordering},
+};
 ///Mutex's states.
 ///
 #[derive(Clone, Copy)]

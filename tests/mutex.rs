@@ -2,7 +2,8 @@ use std::{cell::Cell, thread};
 
 use fearconc::{
     self,
-    mutex::{Guard, Mutex, RefProvider},
+    mutex::{Mutex, Rp},
+    guard::Guard
 };
 ///Number of critical sections.
 const CRIT: usize = 100_000;
@@ -123,20 +124,20 @@ pub fn guard() {
 #[test]
 pub fn providing() {
     let (mut state, mut counter) = (RaceCell::new(0), RaceCell::new(0));
-    let state_provider = RefProvider::create_from(&mut state);
-    let counter_provider = RefProvider::create_from(&mut counter);
+    let state_provider = Rp::create_from(&mut state);
+    let counter_provider = Rp::create_from(&mut counter);
     for _ in 0..CRIT {
         thread::scope(|scope| {
             scope.spawn(|| {
-                let state_ref = RefProvider::acquire(&state_provider);
-                let counter_ref = RefProvider::acquire(&counter_provider);
+                let state_ref = Rp::acquire(&state_provider);
+                let counter_ref = Rp::acquire(&counter_provider);
                 state_ref.set(1);
                 assert_eq!(state_ref.get(), 1);
                 counter_ref.set(counter_ref.get() + 1);
             });
             scope.spawn(|| {
-                let state_ref = RefProvider::acquire(&state_provider);
-                let counter_ref = RefProvider::acquire(&counter_provider);
+                let state_ref = Rp::acquire(&state_provider);
+                let counter_ref = Rp::acquire(&counter_provider);
                 state_ref.set(0);
                 assert_eq!(state_ref.get(), 0);
                 counter_ref.set(counter_ref.get() + 1);
