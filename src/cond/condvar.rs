@@ -1,14 +1,19 @@
+use crate::futex::Futex;
+use crate::mutex::Mutex;
 use std::sync::atomic::AtomicU32;
 use std::sync::atomic::Ordering;
+#[derive(Default)]
 pub struct CondVar {
     flag: AtomicU32,
 }
 
 impl CondVar {
     pub fn new() -> Self {
-        CondVar { flag: 0 }
+        CondVar {
+            flag: AtomicU32::new(0),
+        }
     }
-    
+
     pub fn wait(&self, mutex: &Mutex) {
         let cur = self.flag.load(Ordering::Relaxed);
         mutex.unlock();

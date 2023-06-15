@@ -17,15 +17,9 @@ fn get_st(st: State) -> u32 {
         State::Waiting => 2,
     }
 }
-
+#[derive(Default)]
 pub struct Mutex {
     futex_word: AtomicU32,
-}
-
-impl Default for Mutex {
-    fn default() -> Self {
-        Mutex::new()
-    }
 }
 
 impl Mutex {

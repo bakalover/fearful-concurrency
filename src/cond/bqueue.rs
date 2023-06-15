@@ -1,9 +1,9 @@
 use super::semaphore::{Semaphore as Sem, Ticket};
 use std::{collections::VecDeque, usize};
 pub struct BQueue<T> {
-    producing: Sem,
-    consuming: Sem,
-    guard: Sem,
+    producing: Sem<T>,
+    consuming: Sem<T>,
+    guard: Sem<T>,
     queue: VecDeque<T>,
 }
 
@@ -16,7 +16,7 @@ impl<T> BQueue<T> {
             queue: VecDeque::new(),
         }
     }
-    pub fn put(&self, obj: T) {
+    pub fn put(&mut self, obj: T) {
         let ticket = Ticket::<T>::new(self.producing.acquire());
         {
             let g = Ticket::<T>::new(self.guard.acquire());
@@ -25,10 +25,11 @@ impl<T> BQueue<T> {
         }
         self.consuming.release(ticket)
     }
-    pub fn take(&self) -> T {
+    pub fn take(&mut self) -> T {
         let ticket = Ticket::<T>::new(self.consuming.acquire());
         let g = Ticket::<T>::new(self.guard.acquire());
-        let obj = self.queue.back().unwrap();
+        let obj = self.queue.pop_back().unwrap();
+        self.queue.pop_back();
         self.guard.release(g);
         self.producing.release(ticket);
         obj

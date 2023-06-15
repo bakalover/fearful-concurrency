@@ -1,41 +1,55 @@
+use std::marker::PhantomData;
 use std::usize;
 
+use super::condvar::CondVar;
+use crate::guard::Guard;
 use crate::mutex::core::Mutex;
-use crate::mutex::guard::Guard;
 
-pub struct Ticket<T>{}
+pub struct Ticket<T> {
+    phantom: PhantomData<T>,
+}
 
 impl<T> Ticket<T> {
-    pub(super) fn new(old: Ticket<T>) -> Self{Ticket {  }}
+    pub(super) fn new(_old: Ticket<T>) -> Self {
+        Ticket {
+            phantom: PhantomData,
+        }
+    }
 }
-pub struct Semaphore {
+pub struct Semaphore<T> {
     count: usize,
     mutex: Mutex,
-    cv: Condvar,
+    cv: CondVar,
+    phantom: PhantomData<T>,
 }
 
-
-impl Semaphore {
-
-    pub fn new(count: usize) -> Self{
-        Semaphore { count, mutex: Mutex::new(), cv: CondVar::new() }
+#[allow(clippy::while_immutable_condition)]
+impl<T> Semaphore<T> {
+    pub fn new(count: usize) -> Self {
+        Semaphore {
+            count,
+            mutex: Mutex::new(),
+            cv: CondVar::new(),
+            phantom: PhantomData,
+        }
     }
-    
-    pub fn acquire(&self) -> Ticket{
-        let guard = Guard::new(self.mutex);
-        while(self.count == 0){
-            cv.wait(guard);
+    #[deny(clippy::never_loop)]
+    pub fn acquire(&mut self) -> Ticket<T> {
+        let _guard = Guard::new(&self.mutex);
+        while self.count == 0 {
+            self.cv.wait(&self.mutex);
         }
         self.count -= 1;
-        Ticket {  }
+        Ticket {
+            phantom: PhantomData,
+        }
     }
 
-    pub fn release(&self, ticket:Ticket){
+    pub fn release(&mut self, _ticket: Ticket<T>) {
         {
-            let _guard = Guard::new(self.mutex);
+            let _guard = Guard::new(&self.mutex);
             self.count += 1;
         }
-        cv.notify_one();
+        self.cv.notify_one();
     }
-
 }
