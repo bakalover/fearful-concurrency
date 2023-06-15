@@ -17,7 +17,7 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Run Clippy
-      run: cargo clippy -- -D clippy::pedantic
+      run: cargo clippy -- -D warnings
   
   Build:
     runs-on: ubuntu-latest

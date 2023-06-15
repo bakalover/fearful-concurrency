@@ -1,4 +1,4 @@
-use std::{arch::asm, sync::atomic::AtomicU32, u32::MAX};
+use std::{arch::asm, sync::atomic::AtomicU32};
 
 pub(crate) struct Futex {}
 

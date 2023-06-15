@@ -1,7 +1,4 @@
-use std::{
-    arch::asm,
-    sync::atomic::{AtomicU32, Ordering},
-};
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use crate::futex::Futex;
 ///Mutex's states.
