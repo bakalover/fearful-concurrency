@@ -98,7 +98,7 @@ pub fn mutex_multi_join() {
 
 /// Guard + data race (basically RAII version of "mutex_detach" test).
 #[test]
-pub fn guard() {
+pub fn mutex_guard() {
     let counter = RaceCell::new(0);
     let mutex = Mutex::new();
     for _ in 0..CRIT {
@@ -122,7 +122,7 @@ pub fn guard() {
 
 /// Providing references + data race. Using two Cells to check state on each step and "summary" state represented in "counter".
 #[test]
-pub fn providing() {
+pub fn mutex_providing() {
     let (mut state, mut counter) = (RaceCell::new(0), RaceCell::new(0));
     let state_provider = Rp::create_from(&mut state);
     let counter_provider = Rp::create_from(&mut counter);
