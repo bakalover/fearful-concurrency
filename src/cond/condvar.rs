@@ -5,6 +5,10 @@ pub struct CondVar {
 }
 
 impl CondVar {
+    pub fn new() -> Self {
+        CondVar { flag: 0 }
+    }
+    
     pub fn wait(&self, mutex: &Mutex) {
         let cur = self.flag.load(Ordering::Relaxed);
         mutex.unlock();
