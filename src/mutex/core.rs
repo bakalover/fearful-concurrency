@@ -2,6 +2,8 @@ use std::{
     arch::asm,
     sync::atomic::{AtomicU32, Ordering},
 };
+
+use crate::futex::Futex;
 ///Mutex's states.
 ///
 #[derive(Clone, Copy)]
@@ -54,19 +56,7 @@ impl Mutex {
             if self.futex_word.load(Ordering::Relaxed) == get_st(State::Waiting)
                 || !self.cmpxchg(State::Locked, State::Waiting)
             {
-                unsafe {
-                    let addr = std::ptr::addr_of!(self.futex_word);
-                    asm!(
-                        "mov rax, 202",
-                        "mov rdi, {0}",
-                        "mov rsi, 0",
-                        "mov rdx, 2",
-                        "mov rcx, 0",
-                        "mov r8, 0",
-                        "mov r9, 0",
-                        in(reg) addr
-                    );
-                }
+                Futex::sleep(&self.futex_word);
             }
             if self.cmpxchg(State::Unlocked, State::Waiting) {
                 break;
@@ -79,19 +69,7 @@ impl Mutex {
         if self.futex_word.fetch_sub(1, Ordering::Relaxed) != get_st(State::Locked) {
             self.futex_word
                 .store(get_st(State::Unlocked), Ordering::Relaxed);
-            unsafe {
-                let addr = std::ptr::addr_of!(self.futex_word);
-                asm!(
-                    "mov rax, 202",
-                    "mov rdi, {0}",
-                    "mov rsi, 1",
-                    "mov rdx, 1",
-                    "mov rcx, 0",
-                    "mov r8, 0",
-                    "mov r9, 0",
-                    in(reg) addr
-                );
-            }
+            Futex::wake_one(&self.futex_word);
         };
     }
 }
