@@ -1,37 +1,20 @@
-use std::{cell::Cell, thread};
+#![feature(sync_unsafe_cell)]
+use std::{
+    cell::{Cell, SyncUnsafeCell, UnsafeCell},
+    thread,
+};
 
 use fearconc::{
     self,
+    guard::Guard,
     mutex::{Mutex, Rp},
-    guard::Guard
 };
 ///Number of critical sections.
 const CRIT: usize = 100_000;
 
-///Special custom data type, that allows data races.
-struct RaceCell {
-    val: Cell<i32>,
-}
-
-unsafe impl Sync for RaceCell {}
-
-impl RaceCell {
-    pub fn new(val: i32) -> Self {
-        RaceCell {
-            val: Cell::new(val),
-        }
-    }
-    pub fn get(&self) -> i32 {
-        self.val.get()
-    }
-    pub fn set(&self, val: i32) {
-        self.val.set(val);
-    }
-}
-
 ///Single mutex.
 #[test]
-pub fn mutex_join() {
+fn mutex_single() {
     let mut counter = 0;
     let mutex = Mutex::new();
     for _ in 0..CRIT {
@@ -44,34 +27,40 @@ pub fn mutex_join() {
 
 ///Single mutex + data race.
 #[test]
-pub fn mutex_detach() {
-    let counter = RaceCell::new(0);
+fn mutex_multi() {
+    let counter = SyncUnsafeCell::new(0);
     let mutex = Mutex::new();
     for _ in 0..CRIT {
         thread::scope(|scope| {
             scope.spawn(|| {
                 mutex.lock();
-                counter.set(counter.get() + 1);
+                unsafe {
+                    *counter.get() += 1;
+                }
                 mutex.unlock();
             });
             scope.spawn(|| {
                 mutex.lock();
-                counter.set(counter.get() + 1);
+                unsafe {
+                    *counter.get() += 1;
+                }
                 mutex.unlock();
             });
             scope.spawn(|| {
                 mutex.lock();
-                counter.set(counter.get() - 1);
+                unsafe {
+                    *counter.get() -= 1;
+                }
                 mutex.unlock();
             });
         });
     }
-    assert_eq!(counter.get(), CRIT as i32);
+    assert_eq!(unsafe { *counter.get() }, CRIT as i32);
 }
 
 ///Multiple mutexes with special lifetimes.
 #[test]
-pub fn mutex_multi_join() {
+fn mutex_multi_scope() {
     let mut arr: Vec<i32> = vec![];
     let mutex1 = Mutex::new();
     let mutex2 = Mutex::new();
@@ -98,32 +87,32 @@ pub fn mutex_multi_join() {
 
 /// Guard + data race (basically RAII version of "mutex_detach" test).
 #[test]
-pub fn mutex_guard() {
-    let counter = RaceCell::new(0);
+fn mutex_guard() {
+    let counter = SyncUnsafeCell::new(0);
     let mutex = Mutex::new();
     for _ in 0..CRIT {
         thread::scope(|scope| {
             scope.spawn(|| {
                 let _guard = Guard::new(&mutex);
-                counter.set(counter.get() + 1);
+                unsafe { *counter.get() += 1 };
             });
             scope.spawn(|| {
                 let _guard = Guard::new(&mutex);
-                counter.set(counter.get() + 1);
+                unsafe { *counter.get() += 1 };
             });
             scope.spawn(|| {
                 let _guard = Guard::new(&mutex);
-                counter.set(counter.get() - 1);
+                unsafe { *counter.get() -= 1 };
             });
         });
     }
-    assert_eq!(counter.get(), CRIT as i32);
+    assert_eq!(unsafe { *counter.get() }, CRIT as i32);
 }
 
 /// Providing references + data race. Using two Cells to check state on each step and "summary" state represented in "counter".
 #[test]
-pub fn mutex_providing() {
-    let (mut state, mut counter) = (RaceCell::new(0), RaceCell::new(0));
+fn atomic_reference_provider() {
+    let (mut state, mut counter) = (SyncUnsafeCell::new(0), SyncUnsafeCell::new(0));
     let state_provider = Rp::create_from(&mut state);
     let counter_provider = Rp::create_from(&mut counter);
     for _ in 0..CRIT {
@@ -131,18 +120,25 @@ pub fn mutex_providing() {
             scope.spawn(|| {
                 let state_ref = Rp::acquire(&state_provider);
                 let counter_ref = Rp::acquire(&counter_provider);
-                state_ref.set(1);
-                assert_eq!(state_ref.get(), 1);
-                counter_ref.set(counter_ref.get() + 1);
+                unsafe { *state_ref.get() = 1 };
+                assert_eq!(unsafe { *state_ref.get() }, 1);
+                unsafe {
+                    *counter_ref.get() += 1;
+                }
             });
             scope.spawn(|| {
                 let state_ref = Rp::acquire(&state_provider);
                 let counter_ref = Rp::acquire(&counter_provider);
-                state_ref.set(0);
-                assert_eq!(state_ref.get(), 0);
-                counter_ref.set(counter_ref.get() + 1);
+                unsafe { *state_ref.get() = 0 };
+                assert_eq!(unsafe { *state_ref.get() }, 0);
+                unsafe {
+                    *counter_ref.get() += 1;
+                }
             });
         });
     }
-    assert_eq!(counter_provider.acquire().get(), (CRIT * 2) as i32);
+    assert_eq!(
+        unsafe { *counter_provider.acquire().get() },
+        (CRIT * 2) as i32
+    );
 }
