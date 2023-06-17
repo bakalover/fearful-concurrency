@@ -2,7 +2,6 @@ use super::condvar::CondVar;
 use crate::guard::Guard;
 use crate::mutex::Mutex;
 
-#[allow(dead_code)]
 struct Barrier {
     mutex: Mutex,
     counters: (usize, usize),
@@ -21,8 +20,7 @@ impl Barrier {
             cv: CondVar::new(),
         }
     }
-
-    pub fn arrive(&mut self) {
+    pub fn arrive_wait(&mut self) {
         let _guard = Guard::new(&self.mutex);
         let bro = self.all_bros;
         self.counters.1 -= 1;

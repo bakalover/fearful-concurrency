@@ -18,19 +18,21 @@ impl<T> BQueue<T> {
     }
     pub fn put(&mut self, obj: T) {
         let ticket = Ticket::<T>::new(self.producing.acquire());
-        {
-            let g = Ticket::<T>::new(self.guard.acquire());
-            self.queue.push_front(obj);
-            self.guard.release(g);
-        }
+
+        let g = Ticket::<T>::new(self.guard.acquire());
+        self.queue.push_front(obj);
+        self.guard.release(g);
+
         self.consuming.release(ticket)
     }
     pub fn take(&mut self) -> T {
         let ticket = Ticket::<T>::new(self.consuming.acquire());
+
         let g = Ticket::<T>::new(self.guard.acquire());
         let obj = self.queue.pop_back().unwrap();
         self.queue.pop_back();
         self.guard.release(g);
+
         self.producing.release(ticket);
         obj
     }
