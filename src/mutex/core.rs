@@ -22,6 +22,9 @@ pub struct Mutex {
     futex_word: AtomicU32,
 }
 
+
+// https://dept-info.labri.fr/~denis/Enseignement/2008-IR/Articles/01-futex.pdf
+
 impl Mutex {
     #[must_use]
     pub fn new() -> Self {
@@ -57,7 +60,7 @@ impl Mutex {
 
     ///Unlock operation causes waking up SINGLE thread.
     pub fn unlock(&self) {
-        if self.futex_word.fetch_sub(1, Ordering::Relaxed) != get_st(State::Locked) {
+        if self.futex_word.fetch_sub(1, Ordering::Relaxed) != get_st(State::Locked) { // change to compare_exchange realization
             self.futex_word
                 .store(get_st(State::Unlocked), Ordering::Relaxed);
             Futex::wake_one(&self.futex_word);
