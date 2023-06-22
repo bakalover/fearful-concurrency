@@ -52,6 +52,12 @@ pub struct USQueue<T> {
     is_open: bool,
 }
 
+impl<T> Default for USQueue<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> USQueue<T> {
     pub fn new() -> Self {
         USQueue {
@@ -88,7 +94,7 @@ impl<T> USQueue<T> {
         res
     }
 
-    pub fn close(&mut self){
+    pub fn close(&mut self) {
         {
             let _guard = Guard::new(&self.mutex);
             self.is_open = false;
@@ -96,7 +102,7 @@ impl<T> USQueue<T> {
         self.cond.notify_all();
     }
 
-    pub fn stop(&mut self){
+    pub fn stop(&mut self) {
         {
             let _guard = Guard::new(&self.mutex);
             self.is_open = false;
@@ -104,5 +110,4 @@ impl<T> USQueue<T> {
         }
         self.cond.notify_all();
     }
-    
 }
