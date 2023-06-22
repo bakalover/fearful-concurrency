@@ -1,5 +1,5 @@
 pub mod barrier;
-pub mod bqueue;
+pub mod queue;
 pub mod condvar;
 pub mod semaphore;
 
