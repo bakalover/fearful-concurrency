@@ -49,6 +49,8 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Switch to nightly
         run: rustup default nightly
+      - name: std src code
+        run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
       - name: Mutex module
         run: cargo test m_
       - name: Condvar module
@@ -69,10 +71,12 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Switch to nightly
         run: rustup default nightly
+      - name: std src code
+        run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
       - name: Mutex module
-        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu 
+        run: RUSTFLAGS="-Zsanitizer=thread" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu
       - name: Condvar module
-        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu 
+        run: RUSTFLAGS="-Zsanitizer=thread" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu
 
   ASAN-Testing:
     runs-on: ubuntu-latest
@@ -90,6 +94,6 @@ jobs:
       - name: Switch to nightly
         run: rustup default nightly
       - name: Mutex module
-        run:  RUSTFLAGS="-Zsanitizer=address" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu 
+        run: RUSTFLAGS="-Zsanitizer=address" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu
       - name: Condvar module
-        run:  RUSTFLAGS="-Zsanitizer=address" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu 
+        run: RUSTFLAGS="-Zsanitizer=address" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu
