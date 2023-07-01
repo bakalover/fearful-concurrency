@@ -3,7 +3,7 @@ use std::{cell::SyncUnsafeCell, thread};
 
 use fearconc::cond::Semaphore;
 
-const CRIT: usize = 10_;
+const CRIT: usize = 10_000;
 
 #[test]
 fn c_semaphore_simple() {
