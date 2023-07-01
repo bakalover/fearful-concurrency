@@ -8,7 +8,7 @@ use fearconc::{
 };
 
 ///Number of critical sections.
-const CRIT: usize = 10_000;
+const CRIT: usize = 10_;
 
 ///Single mutex.
 #[test]

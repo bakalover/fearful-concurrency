@@ -50,9 +50,10 @@ jobs:
       - name: Switch to nightly
         run: rustup default nightly
       - name: Mutex module
-        run: cargo test m_ --verbose
+        run: cargo test m_
       - name: Condvar module
-        run: cargo test c_ --verbose
+        run: cargo test c_
+
   TSAN-Testing:
     runs-on: ubuntu-latest
     needs: Testing
@@ -69,9 +70,9 @@ jobs:
       - name: Switch to nightly
         run: rustup default nightly
       - name: Mutex module
-        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu 
       - name: Condvar module
-        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu 
 
   ASAN-Testing:
     runs-on: ubuntu-latest
@@ -89,6 +90,6 @@ jobs:
       - name: Switch to nightly
         run: rustup default nightly
       - name: Mutex module
-        run:  RUSTFLAGS="-Zsanitizer=address" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+        run:  RUSTFLAGS="-Zsanitizer=address" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu 
       - name: Condvar module
-        run:  RUSTFLAGS="-Zsanitizer=address" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+        run:  RUSTFLAGS="-Zsanitizer=address" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu 
