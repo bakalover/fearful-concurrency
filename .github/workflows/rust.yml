@@ -49,5 +49,46 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Switch to nightly
         run: rustup default nightly
-      - name: Run tests
-        run: cargo test --verbose
+      - name: Mutex module
+        run: cargo test m_ --verbose
+      - name: Condvar module
+        run: cargo test c_ --verbose
+  TSAN-Testing:
+    runs-on: ubuntu-latest
+    needs: Testing
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Switch to nightly
+        run: rustup default nightly
+      - name: Mutex module
+        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+      - name: Condvar module
+        run:  RUSTFLAGS="-Zsanitizer=thread" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+
+  ASAN-Testing:
+    runs-on: ubuntu-latest
+    needs: Testing
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Switch to nightly
+        run: rustup default nightly
+      - name: Mutex module
+        run:  RUSTFLAGS="-Zsanitizer=address" cargo test m_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose
+      - name: Condvar module
+        run:  RUSTFLAGS="-Zsanitizer=address" cargo test c_ -Zbuild-std --target x86_64-unknown-linux-gnu --verbose

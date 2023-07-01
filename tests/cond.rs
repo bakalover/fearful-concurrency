@@ -3,10 +3,10 @@ use std::{cell::SyncUnsafeCell, thread};
 
 use fearconc::cond::Semaphore;
 
-const CRIT: usize = 100_000;
+const CRIT: usize = 10_000;
 
 #[test]
-fn semaphore_simple() {
+fn c_semaphore_simple() {
     let mut sem = Semaphore::<i32>::new(3);
     {
         let t = sem.acquire();
@@ -35,7 +35,7 @@ fn semaphore_simple() {
 }
 
 #[test]
-fn mutex_like() {
+fn c_mutex_like() {
     let sem = SyncUnsafeCell::new(Semaphore::<usize>::new(1));
     let counter = SyncUnsafeCell::new(0);
     for _ in 0..CRIT {
@@ -52,7 +52,7 @@ fn mutex_like() {
     unsafe { assert_eq!(*counter.get(), CRIT * 5) }
 }
 #[test]
-fn cycling_state() {
+fn c_cycling_state() {
     let sem1 = SyncUnsafeCell::new(Semaphore::<usize>::new(1));
     let sem2 = SyncUnsafeCell::new(Semaphore::<usize>::new(0));
     let sem3 = SyncUnsafeCell::new(Semaphore::<usize>::new(0));
