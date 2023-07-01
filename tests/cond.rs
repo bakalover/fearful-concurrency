@@ -1,7 +1,7 @@
 #![feature(sync_unsafe_cell)]
 use std::{cell::SyncUnsafeCell, thread};
 
-use fearconc::cond::Semaphore;
+use fearconc::Semaphore;
 
 const CRIT: usize = 10_;
 

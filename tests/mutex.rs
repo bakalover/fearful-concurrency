@@ -1,12 +1,7 @@
 #![feature(sync_unsafe_cell)]
 use std::{cell::SyncUnsafeCell, thread};
 
-use fearconc::{
-    self,
-    guard::Guard,
-    mutex::{Mutex, Rp},
-};
-
+use fearconc::{Guard, Mutex, Rp};
 ///Number of critical sections.
 const CRIT: usize = 10_;
 

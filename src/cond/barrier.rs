@@ -2,7 +2,7 @@ use super::condvar::CondVar;
 use crate::guard::Guard;
 use crate::mutex::Mutex;
 
-struct Barrier {
+pub struct Barrier {
     mutex: Mutex,
     counters: (usize, usize),
     all_bros: bool,
