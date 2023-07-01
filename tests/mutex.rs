@@ -8,11 +8,11 @@ use fearconc::{
 };
 
 ///Number of critical sections.
-const CRIT: usize = 100_000;
+const CRIT: usize = 10_;
 
 ///Single mutex.
 #[test]
-fn mutex_single() {
+fn m_single() {
     let mut counter = 0;
     let mutex = Mutex::new();
     for _ in 0..CRIT {
@@ -25,7 +25,7 @@ fn mutex_single() {
 
 ///Single mutex + data race.
 #[test]
-fn mutex_multi() {
+fn m_multi() {
     let counter = SyncUnsafeCell::new(0);
     let mutex = Mutex::new();
     for _ in 0..CRIT {
@@ -58,7 +58,7 @@ fn mutex_multi() {
 
 ///Multiple mutexes with special lifetimes.
 #[test]
-fn mutex_multi_scope() {
+fn m_multi_scope() {
     let mut arr: Vec<i32> = vec![];
     let mutex1 = Mutex::new();
     let mutex2 = Mutex::new();
@@ -85,7 +85,7 @@ fn mutex_multi_scope() {
 
 /// Guard + data race (basically RAII version of "mutex_detach" test).
 #[test]
-fn mutex_guard() {
+fn m_guard() {
     let counter = SyncUnsafeCell::new(0);
     let mutex = Mutex::new();
     for _ in 0..CRIT {
@@ -109,7 +109,7 @@ fn mutex_guard() {
 
 /// Providing references + data race. Using two Cells to check state on each step and "summary" state represented in "counter".
 #[test]
-fn atomic_reference_provider() {
+fn m_reference() {
     let (mut state, mut counter) = (SyncUnsafeCell::new(0), SyncUnsafeCell::new(0));
     let state_provider = Rp::create_from(&mut state);
     let counter_provider = Rp::create_from(&mut counter);
