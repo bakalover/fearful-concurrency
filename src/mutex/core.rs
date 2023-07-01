@@ -37,8 +37,8 @@ impl Mutex {
             .compare_exchange(
                 get_st(cur),
                 get_st(needed),
-                Ordering::Relaxed,
-                Ordering::Relaxed,
+                Ordering::SeqCst,
+                Ordering::SeqCst,
             )
             .is_ok()
     }
@@ -47,7 +47,7 @@ impl Mutex {
             return;
         }
         loop {
-            if self.futex_word.load(Ordering::Relaxed) == get_st(State::Waiting)
+            if self.futex_word.load(Ordering::SeqCst) == get_st(State::Waiting)
                 || !self.cmpxchg(State::Locked, State::Waiting)
             {
                 Futex::sleep(&self.futex_word);
@@ -60,9 +60,9 @@ impl Mutex {
 
     ///Unlock operation causes waking up SINGLE thread.
     pub fn unlock(&self) {
-        if self.futex_word.fetch_sub(1, Ordering::Relaxed) != get_st(State::Locked) { // change to compare_exchange realization
+        if self.futex_word.fetch_sub(1, Ordering::SeqCst) != get_st(State::Locked) { // change to compare_exchange realization
             self.futex_word
-                .store(get_st(State::Unlocked), Ordering::Relaxed);
+                .store(get_st(State::Unlocked), Ordering::SeqCst);
             Futex::wake_one(&self.futex_word);
         };
     }

@@ -15,21 +15,21 @@ impl CondVar {
     }
 
     pub fn wait(&self, mutex: &Mutex) {
-        let cur = self.flag.load(Ordering::Relaxed);
+        let cur = self.flag.load(Ordering::SeqCst);
         mutex.unlock();
-        while self.flag.load(Ordering::Relaxed) == cur {
+        while self.flag.load(Ordering::SeqCst) == cur {
             Futex::sleep(&self.flag);
         }
         mutex.lock();
     }
 
     pub fn notify_one(&self) {
-        self.flag.fetch_add(1, Ordering::Relaxed);
+        self.flag.fetch_add(1, Ordering::SeqCst);
         Futex::wake_one(&self.flag);
     }
 
     pub fn notify_all(&self) {
-        self.flag.fetch_add(1, Ordering::Relaxed);
+        self.flag.fetch_add(1, Ordering::SeqCst);
         Futex::wake_all(&self.flag);
     }
 }
